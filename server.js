@@ -238,7 +238,7 @@ app.post("/generate", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "mixtral-8x7b",
+        model: "llama-3.1-8b-instent",
         messages: [
           { role: "user", content: prompt }
         ]
