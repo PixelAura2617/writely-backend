@@ -18,7 +18,7 @@ process.on("unhandledRejection", (err) => {
   console.log("UNHANDLED PROMISE:", err);
 });
 
-
+require ("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
@@ -231,31 +231,43 @@ app.post("/generate", async (req, res) => {
   const { prompt } = req.body;
 
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("http://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": "Bearer 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",
-        "Content-Type": "application/json"
-      },
+  "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+  "Content-Type": "application/json"
+},
       body: JSON.stringify({
-        model: "meta-llama/llama-3-8b-instruct",
-        messages: [
-          { role: "user", content: prompt }
-        ]
+        model: "openai/gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }]
       })
     });
 
-    const data = await response.json();
+    // 🔥 DEBUG
+    console.log("STATUS:", response.status);
 
-    const reply =
+    const text = await response.text();
+    console.log("RAW RESPONSE:", text);
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return res.json({ reply: "Invalid JSON from API" });
+    }
+
+    // 🔥 SAFE EXTRACTION
+    let reply =
       data?.choices?.[0]?.message?.content ||
+      data?.choices?.[0]?.text ||
+      data?.error?.message ||
       "No response";
 
-    res.json({ text: reply });
+    res.json({ reply, text: reply });
 
   } catch (error) {
-    console.log("API ERROR:", error);
-    res.json({ text: "Server error" });
+    console.log("ERROR:", error);
+    res.json({ reply: "Server error" });
   }
 });
 // IMAGE AI
