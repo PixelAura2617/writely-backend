@@ -238,7 +238,7 @@ app.post("/generate", async (req, res) => {
   "Content-Type": "application/json"
 },
       body: JSON.stringify({
-        model: "openchat/openchat-3.5",
+        model: "mistralai/mistral-7b-instruct",
         messages: [{ role: "user", content: prompt }]
       })
     });
