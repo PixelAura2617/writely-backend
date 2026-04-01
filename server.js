@@ -231,36 +231,28 @@ app.post("/generate", async (req, res) => {
   const { prompt } = req.body;
 
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-  "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-  "Content-Type": "application/json"
-},
-      body: JSON.stringify({
-        model: "meta-llama/llama-3-8b-instruct:free",
-        messages: [{ role: "user", content: prompt }]
-      })
-    });
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.HF_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inputs: prompt,
+        }),
+      }
+    );
 
-    // 🔥 DEBUG
-    console.log("STATUS:", response.status);
+    const data = await response.json();
 
-    const text = await response.text();
-    console.log("RAW RESPONSE:", text);
+    // Debug
+    console.log("HF RESPONSE:", data);
 
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      return res.json({ reply: "Invalid JSON from API" });
-    }
-
-    // 🔥 SAFE EXTRACTION
     let reply =
-      data?.choices?.[0]?.message?.content ||
-      data?.choices?.[0]?.text ||
-      data?.error?.message ||
+      data?.[0]?.generated_text ||
+      data?.error ||
       "No response";
 
     res.json({ reply, text: reply });
@@ -270,6 +262,8 @@ app.post("/generate", async (req, res) => {
     res.json({ reply: "Server error" });
   }
 });
+   
+
 // IMAGE AI
 app.post("/image", async (req, res) => {
   try {
