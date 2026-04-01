@@ -238,7 +238,7 @@ app.post("/generate", async (req, res) => {
   "Content-Type": "application/json"
 },
       body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo",
+        model: "openchat/openchat-3.5",
         messages: [{ role: "user", content: prompt }]
       })
     });
