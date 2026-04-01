@@ -232,7 +232,7 @@ app.post("/generate", async (req, res) => {
 
   try {
     const response = await fetch(
-     https://api-inference.huggingface.co/models/google/flan-t5-base",
+      "https://api-inference.huggingface.co/models/google/flan-t5-base",
       {
         method: "POST",
         headers: {
@@ -245,15 +245,7 @@ app.post("/generate", async (req, res) => {
       }
     );
 
-    const text = await response.text();
-    console.log("RAW RESPONSE:", text);
-
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      return res.json({ reply: text });
-    }
+    const data = await response.json();
 
     let reply =
       data?.[0]?.generated_text ||
@@ -263,11 +255,12 @@ app.post("/generate", async (req, res) => {
     res.json({ reply });
 
   } catch (error) {
-    console.log("ERROR:", error);
+    console.log(error);
     res.json({ reply: "Server error" });
   }
 });
-  
+   
+ 
 
 // IMAGE AI
 app.post("/image", async (req, res) => {
