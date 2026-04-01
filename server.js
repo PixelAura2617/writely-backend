@@ -227,34 +227,40 @@ app.get("/admin/stats", (req, res) => {
 });
 
 // ================= AI =================
-const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-  method: "POST",
-  headers: {
-    "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    model: "llama3-8b-8192",
-    messages: [{ role: "user", content: prompt }]
-  })
-});
+app.post("/generate", async (req, res) => {
+  const { prompt } = req.body;
+
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "llama3-8b-8192",
+        messages: [
+          { role: "user", content: prompt }
+        ]
+      })
+    });
+
     const data = await response.json();
 
-    let reply =
-      data?.[0]?.generated_text ||
-      data?.error ||
+    console.log("GROQ:", data);
+
+    const reply =
+      data?.choices?.[0]?.message?.content ||
+      data?.error?.message ||
       "No response";
 
     res.json({ reply });
 
   } catch (error) {
-    console.log(error);
+    console.log("ERROR:", error);
     res.json({ reply: "Server error" });
   }
 });
-   
- 
-
 // IMAGE AI
 app.post("/image", async (req, res) => {
   try {
