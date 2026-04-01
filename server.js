@@ -232,7 +232,7 @@ app.post("/generate", async (req, res) => {
 
   try {
     const response = await fetch(
-    https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.1
+      "https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.1",
       {
         method: "POST",
         headers: {
@@ -247,7 +247,6 @@ app.post("/generate", async (req, res) => {
 
     const data = await response.json();
 
-    // Debug
     console.log("HF RESPONSE:", data);
 
     let reply =
@@ -262,7 +261,6 @@ app.post("/generate", async (req, res) => {
     res.json({ reply: "Server error" });
   }
 });
-   
 
 // IMAGE AI
 app.post("/image", async (req, res) => {
