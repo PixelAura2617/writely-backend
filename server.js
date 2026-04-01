@@ -232,7 +232,7 @@ app.post("/generate", async (req, res) => {
 
   try {
     const response = await fetch(
-      "https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.1",
+      "https://router.huggingface.co/hf-inference/models/google/flan-t5-base",
       {
         method: "POST",
         headers: {
@@ -245,22 +245,29 @@ app.post("/generate", async (req, res) => {
       }
     );
 
-    const data = await response.json();
+    const text = await response.text();
+    console.log("RAW RESPONSE:", text);
 
-    console.log("HF RESPONSE:", data);
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return res.json({ reply: text });
+    }
 
     let reply =
       data?.[0]?.generated_text ||
       data?.error ||
       "No response";
 
-    res.json({ reply, text: reply });
+    res.json({ reply });
 
   } catch (error) {
     console.log("ERROR:", error);
     res.json({ reply: "Server error" });
   }
 });
+  
 
 // IMAGE AI
 app.post("/image", async (req, res) => {
