@@ -1,10 +1,10 @@
 require("dotenv").config();
 
-console.log("ENV CHECK:", process.env.MONGO_URI);
+console.log("ENV CHECK:", process.env.MONGO_URl);
 
 const mongoose = require("mongoose");
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URl)
   .then(() => console.log("Mongo Connected ✅"))
   .catch(err => console.log(err));
 
