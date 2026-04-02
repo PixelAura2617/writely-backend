@@ -222,63 +222,65 @@ app.post("/generate", async (req, res) => {
   const { prompt, userId = "default" } = req.body;
 
   try {
-    // 👉 DB se chat load
+    // 🔹 DB se chat load
     let chat = await Chat.findOne({ userId });
 
     if (!chat) {
       chat = new Chat({ userId, messages: [] });
     }
 
-    // 👉 user msg add
-    chat.messages.push({ role: "user", content: prompt });
+    // 🔥 undefined fix
+    if (!chat.messages) {
+      chat.messages = [];
+    }
 
-    // 👉 last 10 msgs only (important)
+    // 🔹 user msg add
+    chat.messages.push({
+      role: "user",
+      content: prompt
+    });
+
+    // 🔹 last 10 msgs only
     const messages = chat.messages.slice(-10);
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        temperature: 0.7,
-        max_tokens: 500,
-        messages: [
-          {
-            role: "system",
-            content: `You are a smart AI like ChatGPT.
+    // 🔹 API call
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-8b-instant",
+          temperature: 0.7,
+          max_tokens: 500,
+          messages: [
+            {
+              role: "system",
+              content: `You are a smart AI like ChatGPT.
 
 LANGUAGE:
 - Reply in Hinglish (Hindi + English mix)
-- Never use pure Hindi like "Namaste"
-- Never use random English like "Hiya"
+- Be natural, not robotic
 
 STYLE:
 - Talk like a normal Indian (casual, friendly)
 - Keep replies short (1-2 lines mostly)
-- Be natural, not robotic
 
 RULES:
-- Greeting → casual ("arre bhai kya haal hai")
-- Question → direct answer
-- Stay strictly on topic
+- Stay on topic
 - Match user's tone
 
-STRICT:
-- No formal tone
-- No over-explaining
-- No random or unrelated answers
-- No repeating same pattern
-
 GOAL:
-Give real, smart, human-like replies like ChatGPT.`
-          },
-          ...messages
-        ]
-      })
-    });
+Give real, smart, human-like replies.`
+            },
+            ...messages
+          ]
+        })
+      }
+    );
 
     const data = await response.json();
 
@@ -288,17 +290,20 @@ Give real, smart, human-like replies like ChatGPT.`
 
     reply = reply.trim();
 
-    // 👉 assistant reply save
-    chat.messages.push({ role: "assistant", content: reply });
+    // 🔹 assistant reply save
+    chat.messages.push({
+      role: "assistant",
+      content: reply
+    });
 
-    // 👉 DB save (PERMANENT MEMORY 🔥)
+    // 🔹 DB save
     await chat.save();
 
     res.json({ reply });
 
   } catch (err) {
-    console.log(err);
-    res.json({ reply: "Server error bhai 😴" });
+    console.log("ERROR:", err);
+    res.json({ reply: "Server error bhai 😓" });
   }
 });
 // IMAGE AI
