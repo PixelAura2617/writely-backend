@@ -239,11 +239,11 @@ app.post("/generate", async (req, res) => {
       },
      body: JSON.stringify({
   model: "llama-3.1-8b-instant",
-  temperature: 0.6,
+  temperature: 0.5,
   messages: [
     {
       role: "system",
-      content: "You are a helpful AI assistant. Reply like a human. Give clear, direct and useful answers. Avoid unnecessary explanation."
+      content: "You are a smart and helpful AI assistant. Always give correct, practical and human-like answers. Avoid wrong steps. Keep answers simple and natural like a real person."
     },
     {
       role: "user",
