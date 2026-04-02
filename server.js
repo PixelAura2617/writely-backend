@@ -18,6 +18,14 @@ process.on("unhandledRejection", (err) => {
   console.log("UNHANDLED PROMISE:", err);
 });
 
+const mongoose = require("mongoose");
+
+mongoose.connect(process.env.MONGO_URL)
+.then(() => console.log("Mongo Connected ✅"))
+.catch(err => console.log(err));
+
+const Chat = require("./models/Chat");
+
 require ("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -228,79 +236,86 @@ app.get("/admin/stats", (req, res) => {
 
 // ================= AI =================
 app.post("/generate", async (req, res) => {
-  const { prompt } = req.body;
+  const { prompt, userId = "default" } = req.body;
 
   try {
+    // 👉 DB se chat load
+    let chat = await Chat.findOne({ userId });
+
+    if (!chat) {
+      chat = new Chat({ userId, messages: [] });
+    }
+
+    // 👉 user msg add
+    chat.messages.push({ role: "user", content: prompt });
+
+    // 👉 last 10 msgs only (important)
+    const messages = chat.messages.slice(-10);
+
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
         "Content-Type": "application/json"
       },
-  body: JSON.stringify({
+      body: JSON.stringify({
         model: "llama-3.1-8b-instant",
-        temperature: 0.6,
-        max_tokens: 800,
+        temperature: 0.7,
+        max_tokens: 500,
         messages: [
           {
             role: "system",
-            content: `You are an advanced AI assistant like ChatGPT.
+            content: `You are a smart AI like ChatGPT.
 
 LANGUAGE:
-- Always reply in Hinglish (Hindi + English mix)
-- Never use pure Hindi like "नमस्ते" or formal lines
-- Never switch randomly to full English like "Hiya"
+- Reply in Hinglish (Hindi + English mix)
+- Never use pure Hindi like "Namaste"
+- Never use random English like "Hiya"
 
 STYLE:
-- Talk like a normal Indian human (casual, friendly)
-- Use simple words like:
-  "bhai", "haan bol", "kya scene h", "samajh gaya"
-
-BEHAVIOR:
-- Keep replies short (1–2 lines mostly)
-- Do NOT over-explain
-- Do NOT add extra story or assumptions
-- Do NOT repeat same pattern every time
+- Talk like a normal Indian (casual, friendly)
+- Keep replies short (1-2 lines mostly)
+- Be natural, not robotic
 
 RULES:
-- Greeting → casual (arre bhai kya haal hai)
+- Greeting → casual ("arre bhai kya haal hai")
 - Question → direct answer
-- Casual msg → casual reply
+- Stay strictly on topic
 - Match user's tone
 
 STRICT:
 - No formal tone
-- No robotic tone
-- No random English greetings
-- No “aapko kya chahiye” type lines
-
-SAFETY:
-- If illegal → "Sorry bhai, isme help nahi kar sakta."
+- No over-explaining
+- No random or unrelated answers
+- No repeating same pattern
 
 GOAL:
-- Give short, real, natural human-like replies every time.`
+Give real, smart, human-like replies like ChatGPT.`
           },
-          {
-            role: "user",
-            content: prompt
-          }
+          ...messages
         ]
       })
-});
+    });
+
     const data = await response.json();
 
-    console.log("GROQ:", data);
-
-    const reply =
+    let reply =
       data?.choices?.[0]?.message?.content ||
-      data?.error?.message ||
-      "No response";
+      "Bhai thoda issue aa gaya 😅";
+
+    reply = reply.trim();
+
+    // 👉 assistant reply save
+    chat.messages.push({ role: "assistant", content: reply });
+
+    // 👉 DB save (PERMANENT MEMORY 🔥)
+    await chat.save();
 
     res.json({ reply });
 
-  } catch (error) {
-    console.log("ERROR:", error);
-    res.json({ reply: "Server error" });
+  } catch (err) {
+    console.log(err);
+    res.json({ reply: "Server error bhai 😴" });
   }
 });
 // IMAGE AI
