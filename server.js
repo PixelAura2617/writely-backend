@@ -251,6 +251,7 @@ app.post("/generate", async (req, res) => {
     }
   ]
 })
+});
     const data = await response.json();
 
     console.log("GROQ:", data);
