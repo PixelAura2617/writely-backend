@@ -1,32 +1,13 @@
-async function fetchWithRetry(url, options, retries = 2) {
-  for (let i = 0; i <= retries; i++) {
-    try {
-      const res = await fetch(url, options);
-      return res;
-    } catch (err) {
-      console.log("Retry...", i);
-      if (i === retries) throw err;
-    }
-  }
-}
-
-process.on("uncaughtException", (err) => {
-  console.log("UNCAUGHT ERROR:", err);
-});
-
-process.on("unhandledRejection", (err) => {
-  console.log("UNHANDLED PROMISE:", err);
-});
+require("dotenv").config();
 
 const mongoose = require("mongoose");
 
-mongoose.connect(process.env.MONGO_URL)
-.then(() => console.log("Mongo Connected ✅"))
-.catch(err => console.log(err));
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("Mongo Connected ✅"))
+  .catch(err => console.log(err));
 
 const Chat = require("./models/Chat");
 
-require ("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
