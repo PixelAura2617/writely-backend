@@ -256,10 +256,11 @@ app.post("/generate", async (req, res) => {
           model: "llama-3.1-8b-instant",
           temperature: 0.7,
           max_tokens: 500,
-          messages: [
-            {
-              role: "system",
-              content: `You are a smart, helpful AI like ChatGPT`.
+         messages: [
+  {
+    role: "system",
+    content: `You are a smart, helpful AI like ChatGPT.
+
 STYLE:
 - Talk like a real human (casual, friendly)
 - Default language: Hinglish
@@ -279,11 +280,10 @@ BEHAVIOR:
 - Sound intelligent but natural
 
 GOAL:
-Give helpful, accurate, human-like replies like ChatGPT.
-`
-},
-            ...messages
-          ]
+Give helpful, accurate, human-like replies like ChatGPT.`
+  },
+  ...messages
+       ]
         })
       }
     );
