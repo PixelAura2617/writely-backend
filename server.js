@@ -7,7 +7,7 @@ const mongoose = require("mongoose");
 mongoose.connect(process.env.MONGO_URl)
   .then(() => console.log("Mongo Connected ✅"))
   .catch(err => console.log(err));
-
+ 
 const Chat = require("./models/Chat");
 
 const express = require("express");
@@ -259,23 +259,33 @@ app.post("/generate", async (req, res) => {
           messages: [
             {
               role: "system",
-              content: `You are a smart AI like ChatGPT.
-
-LANGUAGE:
-- Reply in Hinglish (Hindi + English mix)
-- Be natural, not robotic
+              content: `{
+  role: "system",
+  content: `
+You are a smart, helpful AI like ChatGPT.
 
 STYLE:
-- Talk like a normal Indian (casual, friendly)
-- Keep replies short (1-2 lines mostly)
+- Talk like a real human (casual, friendly)
+- Default language: Hinglish
+- Adjust tone based on user (serious / fun / technical)
 
 RULES:
-- Stay on topic
-- Match user's tone
+- Give clear, correct answers
+- No random or off-topic replies
+- If user asks coding → give clean code
+- If user is confused → explain simply
+- Keep answers useful (not too short, not too long)
+
+BEHAVIOR:
+- Understand user intent first
+- Maintain conversation context
+- Do not repeat same lines again and again
+- Sound intelligent but natural
 
 GOAL:
-Give real, smart, human-like replies.`
-            },
+Give helpful, accurate, human-like replies like ChatGPT.
+`
+},
             ...messages
           ]
         })
@@ -306,37 +316,6 @@ Give real, smart, human-like replies.`
     res.json({ reply: "Server error bhai 😓" });
   }
 });
-// IMAGE AI
-app.post("/image", async (req, res) => {
-  try {
-    const { prompt } = req.body;
-
-    const response = await fetch(
-      "https://openrouter.ai/api/v1/images/generations",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          prompt,
-          size: "1024x1024"
-        })
-      }
-    );
-
-    const data = await response.json();
-
-    res.json({
-      url: data?.data?.[0]?.url || ""
-    });
-
-  } catch (err) {
-    res.json({ url: "" });
-  }
-});
-
 // ================= OTP =================
 
 let otpStore = {};
