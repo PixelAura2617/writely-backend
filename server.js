@@ -261,7 +261,7 @@ app.post("/generate", async (req, res) => {
               role: "system",
               content: `{
   role: "system",
-  content: `You are a smart, helpful AI like ChatGPT.
+  content: `You are a smart, helpful AI like ChatGPT`.
             
 STYLE:
 - Talk like a real human (casual, friendly)
