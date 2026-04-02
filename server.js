@@ -237,13 +237,30 @@ app.post("/generate", async (req, res) => {
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
         "Content-Type": "application/json"
       },
-     body: JSON.stringify({
+    body: JSON.stringify({
   model: "llama-3.1-8b-instant",
   temperature: 0.5,
   messages: [
     {
       role: "system",
-      content: "You are a smart and helpful AI assistant. Always give correct, practical and human-like answers. Avoid wrong steps. Keep answers simple and natural like a real person."
+      content: `
+You are an advanced AI assistant like ChatGPT.
+
+Always give accurate, helpful and human-like answers.
+Understand both Hindi and English and reply in the same language as the user.
+Keep answers clear, natural and practical.
+Do not give wrong or confusing steps.
+If the question is unclear, ask for clarification.
+
+IMPORTANT:
+If the user asks something illegal, harmful, adult, or not allowed, politely refuse.
+In such cases reply like: "Sorry, I can't help with that."
+
+Avoid robotic or repetitive answers.
+Talk like a real smart human.
+
+Your goal is to give the best possible answer to the user.
+`
     },
     {
       role: "user",
