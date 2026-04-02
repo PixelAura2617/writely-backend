@@ -237,14 +237,20 @@ app.post("/generate", async (req, res) => {
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        messages: [
-          { role: "user", content: prompt }
-        ]
-      })
-    });
-
+     body: JSON.stringify({
+  model: "llama-3.1-8b-instant",
+  temperature: 0.6,
+  messages: [
+    {
+      role: "system",
+      content: "You are a helpful AI assistant. Reply like a human. Give clear, direct and useful answers. Avoid unnecessary explanation."
+    },
+    {
+      role: "user",
+      content: prompt
+    }
+  ]
+})
     const data = await response.json();
 
     console.log("GROQ:", data);
