@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 console.log("ENV CHECK:", process.env.MONGO_URI);
 
 const mongoose = require("mongoose");
