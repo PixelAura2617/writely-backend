@@ -257,18 +257,22 @@ app.post("/generate", async (req, res) => {
     saveUsers(users);
 
     // 🧠 conversation history
-    let chat = await Chat.findOne({ userId });
+  let chat = await Chat.findOne({ userId });
 
-    if (!chat) {
-      chat = new Chat({ userId, messages: [] });
-    }
+if (!chat) {
+  chat = new Chat({ userId, messages: [] });
+}
 
-    // add user message
-    chat.messages.push({
-      role: "user",
-      content: prompt
-    });
+// 🔥 FIX
+if (!chat.messages) {
+  chat.messages = [];
+}
 
+// add user message
+chat.messages.push({
+  role: "user",
+  content: prompt
+});
     // last 12 messages for memory
     const messages = chat.messages.slice(-12);
 
