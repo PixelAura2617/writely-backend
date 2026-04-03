@@ -222,28 +222,35 @@ app.post("/generate", async (req, res) => {
   const { prompt, userId = "default" } = req.body;
 
   try {
-    // 🔹 DB se chat load
+    // ❌ Basic safety filter
+    const bannedWords = ["sex", "porn", "xxx", "nude", "fuck", "rape"];
+    if (bannedWords.some(w => prompt.toLowerCase().includes(w))) {
+      return res.json({
+        reply: "Sorry, main is topic par help nahi kar sakta 🙂"
+      });
+    }
+
+    // 💾 DB load
     let chat = await Chat.findOne({ userId });
 
     if (!chat) {
       chat = new Chat({ userId, messages: [] });
     }
 
-    // 🔥 undefined fix
     if (!chat.messages) {
       chat.messages = [];
     }
 
-    // 🔹 user msg add
+    // 👤 user msg
     chat.messages.push({
       role: "user",
       content: prompt
     });
 
-    // 🔹 last 10 msgs only
+    // 🔥 last 10 msgs
     const messages = chat.messages.slice(-10);
 
-    // 🔹 API call
+    // 🤖 API call
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -255,35 +262,41 @@ app.post("/generate", async (req, res) => {
         body: JSON.stringify({
           model: "llama-3.1-8b-instant",
           temperature: 0.7,
-          max_tokens: 500,
-         messages: [
-  {
-    role: "system",
-    content: `You are a smart, helpful AI like ChatGPT.
+          top_p: 0.9,
+          max_tokens: 800,
+          messages: [
+            {
+              role: "system",
+              content: `
+You are a smart, helpful AI like ChatGPT.
 
 STYLE:
-- Talk like a real human (casual, friendly)
+- Talk naturally like a human
 - Default language: Hinglish
-- Adjust tone based on user (serious / fun / technical)
+- Adjust tone based on user
 
 RULES:
 - Give clear, correct answers
 - No random or off-topic replies
-- If user asks coding → give clean code
-- If user is confused → explain simply
-- Keep answers useful (not too short, not too long)
+- Coding → clean code
+- Confusion → simple explanation
+
+STRICT:
+- Do NOT answer sexual, abusive, illegal queries
+- Reply: "Sorry, main is topic par help nahi kar sakta 🙂"
 
 BEHAVIOR:
 - Understand user intent first
-- Maintain conversation context
-- Do not repeat same lines again and again
-- Sound intelligent but natural
+- Maintain context
+- Avoid repetition
+- Sound natural
 
 GOAL:
-Give helpful, accurate, human-like replies like ChatGPT.`
-  },
-  ...messages
-       ]
+Give helpful, accurate, human-like replies.
+              `
+            },
+            ...messages
+          ]
         })
       }
     );
@@ -292,24 +305,25 @@ Give helpful, accurate, human-like replies like ChatGPT.`
 
     let reply =
       data?.choices?.[0]?.message?.content ||
-      "Bhai thoda issue aa gaya 😅";
+      "⚠️ Thoda issue aa gaya, dobara try karo";
 
     reply = reply.trim();
 
-    // 🔹 assistant reply save
+    // 🤖 save reply
     chat.messages.push({
       role: "assistant",
       content: reply
     });
 
-    // 🔹 DB save
     await chat.save();
 
     res.json({ reply });
 
   } catch (err) {
     console.log("ERROR:", err);
-    res.json({ reply: "Server error bhai 😓" });
+    res.json({
+      reply: "⚠️ Server error, thodi der baad try karo"
+    });
   }
 });
 // ================= OTP =================
