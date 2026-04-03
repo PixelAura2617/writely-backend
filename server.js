@@ -220,12 +220,15 @@ app.post("/admin/change-password", (req, res) => {
 });
 
 // ================= AI =================
-app.post("/generate", async (req, res) => {
+  app.post("/generate", async (req, res) => {
   const { prompt, userId = "default" } = req.body;
 
   try {
-    // 🔒 safety
-    const banned = ["sex","porn","xxx","nude","rape"];
+    console.log("🔥 AI ROUTE HIT");
+    console.log("📩 PROMPT:", prompt);
+
+    // ❌ safety filter
+    const banned = ["sex", "porn", "xxx", "nude", "rape"];
     if (banned.some(w => prompt.toLowerCase().includes(w))) {
       return res.json({
         reply: "Sorry, main is topic par help nahi kar sakta 🙂"
@@ -234,7 +237,13 @@ app.post("/generate", async (req, res) => {
 
     // 🌍 detect IP + country
     let ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-    let ipData = await getIP(ip);
+
+    let ipData = { country: "Unknown" };
+    try {
+      ipData = await getIP(ip);
+    } catch {
+      console.log("IP fetch failed");
+    }
 
     let users = getUsers();
 
@@ -253,30 +262,28 @@ app.post("/generate", async (req, res) => {
     }
 
     user.country = ipData.country;
-
     saveUsers(users);
 
-    // 🧠 conversation history
-  let chat = await Chat.findOne({ userId });
+    // 💬 chat history
+    let chat = await Chat.findOne({ userId });
 
-if (!chat) {
-  chat = new Chat({ userId, messages: [] });
-}
+    if (!chat) {
+      chat = new Chat({ userId, messages: [] });
+    }
 
-// 🔥 FIX
-if (!chat.messages) {
-  chat.messages = [];
-}
+    if (!chat.messages) {
+      chat.messages = [];
+    }
 
-// add user message
-chat.messages.push({
-  role: "user",
-  content: prompt
-});
-    // last 12 messages for memory
+    // 👤 user msg
+    chat.messages.push({
+      role: "user",
+      content: prompt
+    });
+
     const messages = chat.messages.slice(-12);
 
-    // 🤖 AI CALL (UPGRADED SYSTEM PROMPT)
+    // 🤖 AI CALL
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -287,45 +294,35 @@ chat.messages.push({
         },
         body: JSON.stringify({
           model: "llama-3.1-8b-instant",
-          temperature: 0.85,
+          temperature: 0.8,
           top_p: 0.95,
           max_tokens: 1000,
           messages: [
             {
               role: "system",
               content: `
-You are a highly intelligent, friendly AI assistant like ChatGPT.
+You are a smart, friendly AI like ChatGPT.
 
-🌍 LANGUAGE RULE:
-- Detect user's language automatically.
-- Reply in SAME language (Hindi, English, Hinglish, Marwadi, etc.)
-- If mixed language → reply in natural Hinglish.
+LANGUAGE:
+- Detect user language automatically
+- Reply in same language (Hindi, English, Hinglish, Marwadi etc.)
 
-💬 STYLE:
-- Talk like a real human (not robotic)
-- Friendly, engaging, slightly casual
-- Use simple words, easy explanations
-- Add emotions when needed (🙂🔥😅 but not too many)
+STYLE:
+- Human-like, natural
+- Friendly and engaging
+- Simple and clear explanations
 
-🧠 BEHAVIOR:
-- Understand user intent deeply
-- Give clear, structured answers
+BEHAVIOR:
+- Understand user deeply
 - If complex → explain step-by-step
-- If simple → short and direct
+- If simple → short answer
 
-💡 SMARTNESS:
-- If user is confused → simplify
-- If user asks code → clean code
-- If user asks advice → practical answer
-
-🚫 STRICT RULES:
+STRICT:
 - No sexual / illegal content
-- No harmful advice
-- If asked → say:
-  "Sorry, main is topic par help nahi kar sakta 🙂"
+- If asked → say politely you can't answer
 
-🎯 GOAL:
-Make user feel like they are talking to a real smart human assistant.
+GOAL:
+Make user feel they are talking to a real human AI.
               `
             },
             ...messages
@@ -334,15 +331,28 @@ Make user feel like they are talking to a real smart human assistant.
       }
     );
 
+    // ❌ ERROR HANDLE (IMPORTANT)
+    if (!response.ok) {
+      const errText = await response.text();
+      console.log("❌ GROQ ERROR:", errText);
+
+      return res.json({
+        reply: "⚠️ AI service error aa gaya"
+      });
+    }
+
     const data = await response.json();
 
-    let reply =
-      data?.choices?.[0]?.message?.content ||
-      "⚠️ Thoda issue aa gaya, dobara try karo";
+    let reply = data?.choices?.[0]?.message?.content;
+
+    if (!reply) {
+      console.log("❌ EMPTY AI RESPONSE:", data);
+      reply = "⚠️ AI se reply nahi aaya";
+    }
 
     reply = reply.trim();
 
-    // save reply
+    // 🤖 save reply
     chat.messages.push({
       role: "assistant",
       content: reply
@@ -354,6 +364,7 @@ Make user feel like they are talking to a real smart human assistant.
 
   } catch (err) {
     console.log("AI ERROR:", err);
+
     res.json({
       reply: "⚠️ Server error, thodi der baad try karo"
     });
