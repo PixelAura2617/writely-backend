@@ -281,7 +281,12 @@ app.post("/admin/change-password", (req, res) => {
       content: prompt
     });
 
-    const messages = chat.messages.slice(-12);
+    const messages = chat.messages
+  .slice(-12)
+  .map(m => ({
+    role: m.role,
+    content: m.content
+  }));
 
     // 🤖 AI CALL
     const response = await fetch(
